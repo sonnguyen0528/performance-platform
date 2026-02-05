@@ -105,8 +105,9 @@ const DEFAULT_MEALS = {
   supplements: [
     { item: "Protein Shake #1", when: "Post-workout or morning", cal: 150, protein: 25, notes: "1 scoop whey + water or milk", done: false },
     { item: "Protein Shake #2", when: "Before bed (~9:30 PM)", cal: 150, protein: 25, notes: "Casein or whey + water", done: false },
+    { item: "Protein Shake #3 (half scoop)", when: "Anytime to hit target", cal: 75, protein: 12, notes: "Extra half scoop to close gap", done: false },
     { item: "Greek Yogurt + Walnuts", when: "Snack anytime", cal: 300, protein: 20, notes: "1 cup yogurt + 1oz walnuts", done: false },
-    { item: "Avocado or Olive Oil", when: "Add to any Tempo meal", cal: 250, protein: 2, notes: "1 avocado OR 2 tbsp olive oil", done: false },
+    { item: "Avocado or Olive Oil", when: "Add to any Tempo meal", cal: 280, protein: 2, notes: "1 avocado OR 2 tbsp olive oil", done: false },
   ],
   weeklyPrep: [
     { task: "Tempo order confirmed (20 meals)", done: true, tip: "$142.59 - delivery scheduled" },
@@ -1685,12 +1686,13 @@ export default function App() {
 
             {/* Daily totals */}
             {(() => {
-              const tempoTotal = meals.tempoMeals?.reduce((acc, m) => ({ cal: acc.cal + (m.done ? m.cal : 0), protein: acc.protein + (m.done ? m.protein : 0) }), { cal: 0, protein: 0 }) || { cal: 0, protein: 0 };
+              // Actual Tempo averages: 464 cal, 28g protein, 41g carbs per meal
+              const tempoTotal = meals.tempoMeals?.reduce((acc, m) => ({ cal: acc.cal + (m.done ? 464 : 0), protein: acc.protein + (m.done ? 28 : 0) }), { cal: 0, protein: 0 }) || { cal: 0, protein: 0 };
               const suppTotal = meals.supplements?.reduce((acc, s) => ({ cal: acc.cal + (s.done ? s.cal : 0), protein: acc.protein + (s.done ? s.protein : 0) }), { cal: 0, protein: 0 }) || { cal: 0, protein: 0 };
               const totalCal = tempoTotal.cal + suppTotal.cal;
               const totalProtein = tempoTotal.protein + suppTotal.protein;
-              const targetCal = 2350;
-              const targetProtein = 160;
+              const targetCal = 2347;
+              const targetProtein = 168;
               return (
                 <div style={{
                   background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
@@ -1788,7 +1790,7 @@ export default function App() {
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: "#4ade80" }}>Required Supplements</span>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>+850 cal • +72g protein</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>+955 cal • +84g protein</span>
                 </div>
                 <span style={{ fontSize: 11, color: "#4ade80" }}>Must complete to hit macros</span>
               </div>
@@ -1885,7 +1887,7 @@ export default function App() {
             }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#4ade80", letterSpacing: "0.5px", marginBottom: 6 }}>DAILY TOTAL WHEN COMPLETE</div>
               <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.6 }}>
-                <strong>~2,350 cal</strong> (Tempo 1,500 + Supps 850) • <strong>~162g protein</strong> (Tempo 90g + Supps 72g) — Hits your targets with zero cooking.
+                <strong>~2,347 cal</strong> (Tempo 1,392 + Supps 955) • <strong>~168g protein</strong> (Tempo 84g + Supps 84g) — Hits your targets with zero cooking.
               </div>
             </div>
           </div>

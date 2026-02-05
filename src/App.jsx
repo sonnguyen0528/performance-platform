@@ -81,9 +81,26 @@ const DEFAULT_TARGETS = [
 
 const DEFAULT_MEALS = {
   tempoMeals: [
-    { meal: "Tempo Meal 1", time: "~11:30 AM", cal: 500, protein: 30, done: false },
-    { meal: "Tempo Meal 2", time: "~3:00 PM", cal: 500, protein: 30, done: false },
-    { meal: "Tempo Meal 3", time: "~7:00 PM", cal: 500, protein: 30, done: false },
+    { meal: "Grilled Chicken in Garlic Cream", desc: "green beans, roasted red peppers", cal: 480, protein: 32, tags: ["30g+", "<500cal"], warning: null, done: false },
+    { meal: "Sunday Sauce Sausage Penne", desc: "roasted broccoli and cauliflower", cal: 490, protein: 24, tags: ["Gut Support"], warning: null, done: false },
+    { meal: "Enchilada Beef Bowl", desc: "Mexican rice and red peppers", cal: 470, protein: 28, tags: ["<500cal"], warning: "Beef - 1 of 2/wk max (gout)", done: false },
+    { meal: "Grilled Chicken & Mushroom Sauce", desc: "rotini and green beans", cal: 460, protein: 31, tags: ["30g+", "<500cal"], warning: null, done: false },
+    { meal: "Alfredo Grilled Chicken Breast", desc: "pesto butter squash", cal: 480, protein: 33, tags: ["30g+", "<500cal", "Fiber"], warning: null, done: false },
+    { meal: "Red Pepper Chicken Breast", desc: "garlicky pasta and zucchini", cal: 470, protein: 31, tags: ["30g+", "<500cal"], warning: null, done: false },
+    { meal: "Sizzlin' Chicken Fajita Platter", desc: "fiesta rice and guacamole", cal: 450, protein: 28, tags: ["<500cal", "Fiber"], warning: null, done: false },
+    { meal: "Chipotle Ranch Chicken", desc: "cheesy Southwest sweet potato", cal: 480, protein: 32, tags: ["30g+", "<500cal", "Fiber"], warning: null, done: false },
+    { meal: "Braised Beef Tomato Ragu Pasta", desc: "green beans and Parmesan", cal: 490, protein: 30, tags: ["30g+", "<500cal"], warning: "Beef - 2 of 2/wk max (gout)", done: false },
+    { meal: "Spicy Arrabbiata Chicken", desc: "sweet potatoes and Brussels", cal: 440, protein: 31, tags: ["30g+", "<500cal", "Low Carb"], warning: null, done: false },
+    { meal: "Fiery Mexican Street Corn Chicken", desc: "fiesta roasted vegetables", cal: 470, protein: 30, tags: ["30g+", "<500cal", "Fiber"], warning: null, done: false },
+    { meal: "Classic Marinara Turkey Meatballs", desc: "roasted carrots and broccoli", cal: 420, protein: 26, tags: ["<500cal", "Low Carb"], warning: null, done: false },
+    { meal: "Sweet Heat BBQ Grilled Chicken", desc: "broccoli and sweet potatoes", cal: 460, protein: 32, tags: ["30g+", "<500cal", "Fiber"], warning: null, done: false },
+    { meal: "Indian Butter Chicken", desc: "caramelized onion veggie rice", cal: 510, protein: 30, tags: ["30g+", "Fiber"], warning: null, done: false },
+    { meal: "Mediterranean Veggie Grain Bowl", desc: "feta and garlic green beans", cal: 380, protein: 15, tags: ["<500cal", "Fiber", "Veggie"], warning: "Low protein - add extra shake", done: false },
+    { meal: "Creamy Tomato Turkey Meatball Pasta", desc: "garlic green beans and squash", cal: 520, protein: 31, tags: ["30g+"], warning: null, done: false },
+    { meal: "Calabrian Chili Shrimp Scampi", desc: "Parmesan and zucchini", cal: 390, protein: 22, tags: ["<500cal", "Pescatarian"], warning: "SKIP - Shellfish triggers gout!", done: false },
+    { meal: "Italian Sausage & Asiago Potatoes", desc: "white wine sauce", cal: 480, protein: 24, tags: ["<500cal", "Fiber"], warning: null, done: false },
+    { meal: "Braised Pork Amatriciana", desc: "mashed potatoes and carrots", cal: 530, protein: 26, tags: ["Gut Support"], warning: null, done: false },
+    { meal: "Creamy Mushroom Parmesan Pork Chop", desc: "roasted vegetables", cal: 490, protein: 33, tags: ["30g+", "Fiber"], warning: null, done: false },
   ],
   supplements: [
     { item: "Protein Shake #1", when: "Post-workout or morning", cal: 150, protein: 25, notes: "1 scoop whey + water or milk", done: false },
@@ -92,12 +109,13 @@ const DEFAULT_MEALS = {
     { item: "Avocado or Olive Oil", when: "Add to any Tempo meal", cal: 250, protein: 2, notes: "1 avocado OR 2 tbsp olive oil", done: false },
   ],
   weeklyPrep: [
-    { task: "Order Tempo Meals for the week", done: false, tip: "Schedule delivery for Sunday or Monday." },
+    { task: "Tempo order confirmed (20 meals)", done: true, tip: "$142.59 - delivery scheduled" },
     { task: "Stock protein powder (whey + casein)", done: false, tip: "2 scoops/day = ~1 lb/week." },
     { task: "Buy Greek yogurt (32oz tub)", done: false, tip: "Plain, high protein. Lasts the week." },
     { task: "Buy walnuts (8oz bag)", done: false, tip: "Pre-portion into 1oz bags if helpful." },
     { task: "Buy avocados (5-6)", done: false, tip: "Get some ripe, some firm for later in week." },
     { task: "Prep shaker bottles", done: false, tip: "Keep one at home, one at work/gym." },
+    { task: "SWAP shrimp scampi for another meal", done: false, tip: "Shellfish = gout trigger. Trade it!" },
   ],
 };
 
@@ -1715,37 +1733,47 @@ export default function App() {
                 display: "flex", justifyContent: "space-between", alignItems: "center",
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#fb923c" }}>Tempo Meals</span>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>1,500 cal • 90g protein</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#fb923c" }}>Your Tempo Meals</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>20 meals • $142.59</span>
                 </div>
-                <a href="https://www.tempomeals.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#fb923c", textDecoration: "none" }}>
-                  tempomeals.com ↗
-                </a>
+                <span style={{ fontSize: 11, color: "#64748b" }}>
+                  {meals.tempoMeals?.filter(m => m.done).length || 0}/20 eaten
+                </span>
               </div>
-              {meals.tempoMeals?.map((meal, i) => (
-                <div key={i} style={{
-                  display: "grid", gridTemplateColumns: "32px 1fr 80px 80px 80px",
-                  gap: 12, padding: "12px 20px", alignItems: "center",
-                  borderBottom: i < meals.tempoMeals.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
-                  opacity: meal.done ? 0.5 : 1,
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={meal.done}
-                    onChange={(e) => {
-                      setMeals(m => ({
-                        ...m,
-                        tempoMeals: m.tempoMeals.map((t, j) => j === i ? { ...t, done: e.target.checked } : t)
-                      }));
-                    }}
-                    style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#fb923c" }}
-                  />
-                  <div style={{ fontSize: 13, fontWeight: 600, textDecoration: meal.done ? "line-through" : "none" }}>{meal.meal}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{meal.time}</div>
-                  <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: "#f59e0b" }}>{meal.cal} cal</div>
-                  <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: "#ef4444" }}>{meal.protein}g</div>
-                </div>
-              ))}
+              <div style={{ maxHeight: 400, overflowY: "auto" }}>
+                {meals.tempoMeals?.map((meal, i) => (
+                  <div key={i} style={{
+                    display: "grid", gridTemplateColumns: "32px 1fr 70px 50px",
+                    gap: 12, padding: "10px 20px", alignItems: "center",
+                    borderBottom: i < meals.tempoMeals.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                    opacity: meal.done ? 0.4 : 1,
+                    background: meal.warning?.includes("SKIP") ? "rgba(239,68,68,0.08)" : "transparent",
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={meal.done}
+                      onChange={(e) => {
+                        setMeals(m => ({
+                          ...m,
+                          tempoMeals: m.tempoMeals.map((t, j) => j === i ? { ...t, done: e.target.checked } : t)
+                        }));
+                      }}
+                      style={{ width: 18, height: 18, cursor: "pointer", accentColor: meal.warning?.includes("SKIP") ? "#ef4444" : "#fb923c" }}
+                    />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, textDecoration: meal.done ? "line-through" : "none" }}>{meal.meal}</div>
+                      <div style={{ fontSize: 11, color: "#64748b" }}>{meal.desc}</div>
+                      {meal.warning && (
+                        <div style={{ fontSize: 10, color: meal.warning.includes("SKIP") ? "#ef4444" : "#f59e0b", marginTop: 2, fontWeight: 600 }}>
+                          {meal.warning}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#f59e0b", textAlign: "right" }}>{meal.cal}</div>
+                    <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: meal.protein >= 30 ? "#4ade80" : "#f59e0b", textAlign: "right" }}>{meal.protein}g</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Required Supplements */}

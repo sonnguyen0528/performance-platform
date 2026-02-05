@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, googleProvider, db } from "./firebase";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const DEFAULT_PROFILE = {
@@ -75,6 +78,55 @@ const DEFAULT_TARGETS = [
   { metric: "Steps", current: "TBD", target: "10,000/day", how: "Fasting morning walks + throughout day." },
   { metric: "Sleep", current: "Variable", target: "8–9 hrs/night", how: "10:30 PM → 8:00 AM minimum." },
 ];
+
+const DEFAULT_GROCERIES = {
+  proteins: [
+    { item: "Chicken breast/thighs", qty: "4 lbs", notes: "~8oz/day cooked", have: false },
+    { item: "Ground turkey", qty: "1.5 lbs", notes: "Burgers, bowls", have: false },
+    { item: "Salmon fillets", qty: "1.5 lbs", notes: "2-3 dinners", have: false },
+    { item: "Smoked salmon", qty: "8 oz", notes: "Breakfast 1-2x", have: false },
+    { item: "White fish (cod/tilapia)", qty: "1 lb", notes: "Fish tacos", have: false },
+    { item: "Eggs", qty: "2 dozen", notes: "2-3/day", have: false },
+    { item: "Greek yogurt", qty: "32 oz tub", notes: "Meal 1 option", have: false },
+    { item: "Cottage cheese", qty: "16 oz", notes: "Late night", have: false },
+    { item: "Protein powder", qty: "—", notes: "Post-workout", have: false },
+  ],
+  carbs: [
+    { item: "Brown rice", qty: "2 lbs dry", notes: "~1 cup cooked/day", have: false },
+    { item: "Sweet potatoes", qty: "4-5 medium", notes: "Dinners", have: false },
+    { item: "Russet potatoes", qty: "2 lbs", notes: "Roasting", have: false },
+    { item: "Quinoa", qty: "1 lb dry", notes: "2-3 dinners", have: false },
+    { item: "Oats", qty: "1 lb", notes: "Overnight oats", have: false },
+    { item: "Whole grain bread", qty: "1 loaf", notes: "Toast/breakfast", have: false },
+    { item: "Black beans", qty: "2 cans", notes: "Bowls, tacos", have: false },
+    { item: "Lentils", qty: "1 lb dry", notes: "Folate boost", have: false },
+    { item: "Granola", qty: "12 oz", notes: "With yogurt", have: false },
+  ],
+  vegetables: [
+    { item: "Spinach", qty: "2 containers", notes: "Daily greens (folate)", have: false },
+    { item: "Broccoli", qty: "2 lbs", notes: "Cruciferous daily (liver)", have: false },
+    { item: "Brussels sprouts", qty: "1.5 lbs", notes: "2-3 dinners", have: false },
+    { item: "Asparagus", qty: "1 bunch", notes: "Folate source", have: false },
+    { item: "Bok choy", qty: "1 bunch", notes: "Stir-fry", have: false },
+    { item: "Mixed salad greens", qty: "1 container", notes: "Salads", have: false },
+    { item: "Cauliflower", qty: "1 head", notes: "Liver support", have: false },
+  ],
+  fats: [
+    { item: "Avocados", qty: "5-6", notes: "~1/day", have: false },
+    { item: "Walnuts", qty: "8 oz bag", notes: "Snacks, yogurt", have: false },
+    { item: "Olive oil", qty: "—", notes: "Cooking (have on hand)", have: false },
+    { item: "Cream cheese", qty: "8 oz", notes: "Smoked salmon", have: false },
+  ],
+  fruits: [
+    { item: "Berries (mixed)", qty: "2 pints", notes: "Oats, snacks", have: false },
+    { item: "Bananas", qty: "1 bunch", notes: "Pre-workout", have: false },
+  ],
+  other: [
+    { item: "Dark chocolate (70%+)", qty: "1 bar", notes: "Late night treat", have: false },
+    { item: "Corn tortillas", qty: "1 pack", notes: "Fish tacos", have: false },
+    { item: "Coffee", qty: "—", notes: "Black only", have: false },
+  ],
+};
 
 const TARGET_START_DATE = new Date("2026-02-04");
 const TARGET_WEEKS = 12;
@@ -372,7 +424,7 @@ const TAG_COLORS = {
 // ─── STORAGE HELPERS ──────────────────────────────────────────────────────────
 const STORAGE_KEY = "sonny_plan_v3";
 
-function loadData() {
+function loadLocalData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
@@ -380,10 +432,32 @@ function loadData() {
   return null;
 }
 
-function saveData(data) {
+function saveLocalData(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (e) {}
+}
+
+async function loadCloudData(userId) {
+  try {
+    const docRef = doc(db, "users", userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    }
+  } catch (e) {
+    console.error("Error loading cloud data:", e);
+  }
+  return null;
+}
+
+async function saveCloudData(userId, data) {
+  try {
+    const docRef = doc(db, "users", userId);
+    await setDoc(docRef, { ...data, updatedAt: new Date().toISOString() });
+  } catch (e) {
+    console.error("Error saving cloud data:", e);
+  }
 }
 
 // ─── COMPONENTS ───────────────────────────────────────────────────────────────
@@ -479,31 +553,115 @@ function TagBadge({ tag }) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const stored = loadData();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
   const [tab, setTab] = useState("schedule");
-  const [profile, setProfile] = useState(stored?.profile || DEFAULT_PROFILE);
-  const [meds, setMeds] = useState(stored?.meds || DEFAULT_MEDS);
-  const [supps, setSupps] = useState(stored?.supps || DEFAULT_SUPPS);
-  const [conditions, setConditions] = useState(stored?.conditions || DEFAULT_CONDITIONS);
-  const [labs, setLabs] = useState(stored?.labs || DEFAULT_LABS);
-  const [targets, setTargets] = useState(stored?.targets || DEFAULT_TARGETS);
-  const [schedule, setSchedule] = useState(stored?.schedule || DEFAULT_SCHEDULE);
-  const [workouts, setWorkouts] = useState(stored?.workouts || DEFAULT_WORKOUTS);
+  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const [meds, setMeds] = useState(DEFAULT_MEDS);
+  const [supps, setSupps] = useState(DEFAULT_SUPPS);
+  const [conditions, setConditions] = useState(DEFAULT_CONDITIONS);
+  const [labs, setLabs] = useState(DEFAULT_LABS);
+  const [targets, setTargets] = useState(DEFAULT_TARGETS);
+  const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
+  const [workouts, setWorkouts] = useState(DEFAULT_WORKOUTS);
   const [selectedDay, setSelectedDay] = useState(() => DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]);
   const [selectedWorkout, setSelectedWorkout] = useState(Object.keys(DEFAULT_WORKOUTS)[0]);
   const [selectedPhase, setSelectedPhase] = useState("Version A (Strength — 12 Weeks)");
-  const [workoutLogs, setWorkoutLogs] = useState(stored?.workoutLogs || {});
+  const [workoutLogs, setWorkoutLogs] = useState({});
+  const [groceries, setGroceries] = useState(DEFAULT_GROCERIES);
   const [showNotes, setShowNotes] = useState(false);
-  const [notes, setNotes] = useState(stored?.notes || "");
+  const [notes, setNotes] = useState("");
   const [undoStack, setUndoStack] = useState([]);
 
-  // Auto-save
+  // Auth state listener
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        // Load from cloud first, fallback to local
+        setSyncing(true);
+        const cloudData = await loadCloudData(currentUser.uid);
+        if (cloudData) {
+          setProfile(cloudData.profile || DEFAULT_PROFILE);
+          setMeds(cloudData.meds || DEFAULT_MEDS);
+          setSupps(cloudData.supps || DEFAULT_SUPPS);
+          setConditions(cloudData.conditions || DEFAULT_CONDITIONS);
+          setLabs(cloudData.labs || DEFAULT_LABS);
+          setTargets(cloudData.targets || DEFAULT_TARGETS);
+          setSchedule(cloudData.schedule || DEFAULT_SCHEDULE);
+          setWorkouts(cloudData.workouts || DEFAULT_WORKOUTS);
+          setWorkoutLogs(cloudData.workoutLogs || {});
+          setGroceries(cloudData.groceries || DEFAULT_GROCERIES);
+          setNotes(cloudData.notes || "");
+        } else {
+          // First time: load local data and sync to cloud
+          const localData = loadLocalData();
+          if (localData) {
+            setProfile(localData.profile || DEFAULT_PROFILE);
+            setMeds(localData.meds || DEFAULT_MEDS);
+            setSupps(localData.supps || DEFAULT_SUPPS);
+            setConditions(localData.conditions || DEFAULT_CONDITIONS);
+            setLabs(localData.labs || DEFAULT_LABS);
+            setTargets(localData.targets || DEFAULT_TARGETS);
+            setSchedule(localData.schedule || DEFAULT_SCHEDULE);
+            setWorkouts(localData.workouts || DEFAULT_WORKOUTS);
+            setWorkoutLogs(localData.workoutLogs || {});
+            setGroceries(localData.groceries || DEFAULT_GROCERIES);
+            setNotes(localData.notes || "");
+          }
+        }
+        setSyncing(false);
+      } else {
+        // Not logged in: load from local storage
+        const localData = loadLocalData();
+        if (localData) {
+          setProfile(localData.profile || DEFAULT_PROFILE);
+          setMeds(localData.meds || DEFAULT_MEDS);
+          setSupps(localData.supps || DEFAULT_SUPPS);
+          setConditions(localData.conditions || DEFAULT_CONDITIONS);
+          setLabs(localData.labs || DEFAULT_LABS);
+          setTargets(localData.targets || DEFAULT_TARGETS);
+          setSchedule(localData.schedule || DEFAULT_SCHEDULE);
+          setWorkouts(localData.workouts || DEFAULT_WORKOUTS);
+          setWorkoutLogs(localData.workoutLogs || {});
+          setNotes(localData.notes || "");
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Auto-save (local + cloud if logged in)
+  useEffect(() => {
+    if (loading) return;
+    const data = { profile, meds, supps, conditions, labs, targets, schedule, workouts, workoutLogs, groceries, notes };
     const timer = setTimeout(() => {
-      saveData({ profile, meds, supps, conditions, labs, targets, schedule, workouts, workoutLogs, notes });
+      saveLocalData(data);
+      if (user) {
+        saveCloudData(user.uid, data);
+      }
     }, 500);
     return () => clearTimeout(timer);
-  }, [profile, meds, supps, conditions, labs, targets, schedule, workouts, workoutLogs, notes]);
+  }, [profile, meds, supps, conditions, labs, targets, schedule, workouts, workoutLogs, groceries, notes, user, loading]);
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Sign in error:", error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
+  };
 
   const updateProfile = (key, val) => setProfile((p) => ({ ...p, [key]: val }));
   const updateMed = (i, key, val) => setMeds((m) => m.map((x, j) => (j === i ? { ...x, [key]: val } : x)));
@@ -565,10 +723,30 @@ export default function App() {
     { id: "workouts", label: "Training", icon: "🏋️" },
     { id: "health", label: "Health", icon: "🩺" },
     { id: "nutrition", label: "Nutrition", icon: "🥩" },
+    { id: "groceries", label: "Groceries", icon: "🛒" },
     { id: "targets", label: "90-Day", icon: "🎯" },
   ];
 
   const currentDayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        background: "#09090b",
+        color: "#e2e8f0",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif",
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Performance Platform</div>
+          <div style={{ fontSize: 14, color: "#64748b" }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -606,6 +784,42 @@ export default function App() {
               </p>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {syncing && (
+                <span style={{ fontSize: 11, color: "#60a5fa" }}>Syncing...</span>
+              )}
+              {user ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)",
+                    borderRadius: 8, padding: "4px 10px",
+                  }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80" }} />
+                    <span style={{ fontSize: 11, color: "#4ade80", fontWeight: 500 }}>Synced</span>
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    style={{
+                      background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+                      color: "#94a3b8", borderRadius: 8, padding: "6px 12px", fontSize: 12,
+                      cursor: "pointer", fontWeight: 500,
+                    }}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleSignIn}
+                  style={{
+                    background: "rgba(96,165,250,0.15)", border: "1px solid rgba(96,165,250,0.3)",
+                    color: "#60a5fa", borderRadius: 8, padding: "6px 12px", fontSize: 12,
+                    cursor: "pointer", fontWeight: 600,
+                  }}
+                >
+                  Sign In to Sync
+                </button>
+              )}
               <button
                 onClick={() => setShowNotes(!showNotes)}
                 style={{
@@ -1200,6 +1414,189 @@ export default function App() {
                     <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5 }}>{n.text}</div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── GROCERIES TAB ───────────────────────────────────────────────── */}
+        {tab === "groceries" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Header with reset and clear */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>Weekly Grocery List</div>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Based on your nutrition targets — check off items as you shop</div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => {
+                    const cleared = {};
+                    Object.keys(groceries).forEach(cat => {
+                      cleared[cat] = groceries[cat].map(item => ({ ...item, have: false }));
+                    });
+                    setGroceries(cleared);
+                  }}
+                  style={{
+                    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 6, color: "#94a3b8", fontSize: 11, padding: "6px 12px", cursor: "pointer",
+                  }}
+                >
+                  Clear All
+                </button>
+                <button
+                  onClick={() => setGroceries(DEFAULT_GROCERIES)}
+                  style={{
+                    background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.2)",
+                    borderRadius: 6, color: "#60a5fa", fontSize: 11, padding: "6px 12px", cursor: "pointer",
+                  }}
+                >
+                  Reset Defaults
+                </button>
+              </div>
+            </div>
+
+            {/* Avoid list */}
+            <div style={{
+              background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)",
+              borderRadius: 10, padding: "12px 16px",
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#ef4444", letterSpacing: "0.5px", marginBottom: 6 }}>AVOID (VA MODS)</div>
+              <div style={{ fontSize: 12, color: "#94a3b8" }}>
+                Red meat (max 2x/wk) • Shellfish & organ meats (gout) • Alcohol (liver) • Juice, soda, candy (glucose) • Processed foods
+              </div>
+            </div>
+
+            {/* Category sections */}
+            {[
+              { key: "proteins", label: "Proteins", color: "#ef4444", icon: "🥩" },
+              { key: "carbs", label: "Carbs", color: "#f59e0b", icon: "🍚" },
+              { key: "vegetables", label: "Vegetables", color: "#4ade80", icon: "🥬" },
+              { key: "fats", label: "Healthy Fats", color: "#60a5fa", icon: "🥑" },
+              { key: "fruits", label: "Fruits", color: "#c084fc", icon: "🍇" },
+              { key: "other", label: "Other", color: "#94a3b8", icon: "🛒" },
+            ].map(({ key, label, color, icon }) => (
+              <div key={key} style={{
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 14, overflow: "hidden",
+              }}>
+                <div style={{
+                  padding: "12px 20px",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  background: `${color}08`,
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span>{icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color }}>{label}</span>
+                    <span style={{ fontSize: 11, color: "#64748b" }}>
+                      ({groceries[key]?.filter(i => i.have).length}/{groceries[key]?.length})
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setGroceries(g => ({
+                        ...g,
+                        [key]: [...g[key], { item: "New item", qty: "—", notes: "", have: false }]
+                      }));
+                    }}
+                    style={{
+                      background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 6, color: "#94a3b8", fontSize: 11, padding: "4px 10px", cursor: "pointer",
+                    }}
+                  >
+                    + Add
+                  </button>
+                </div>
+                <div>
+                  {groceries[key]?.map((item, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "32px 1fr 100px 1fr 28px",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 20px",
+                        borderBottom: i < groceries[key].length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                        opacity: item.have ? 0.5 : 1,
+                        transition: "opacity 0.2s",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.have}
+                        onChange={(e) => {
+                          setGroceries(g => ({
+                            ...g,
+                            [key]: g[key].map((x, j) => j === i ? { ...x, have: e.target.checked } : x)
+                          }));
+                        }}
+                        style={{ width: 18, height: 18, cursor: "pointer", accentColor: color }}
+                      />
+                      <div style={{ fontSize: 13, fontWeight: 500, textDecoration: item.have ? "line-through" : "none" }}>
+                        <EditableCell
+                          value={item.item}
+                          onChange={(v) => {
+                            setGroceries(g => ({
+                              ...g,
+                              [key]: g[key].map((x, j) => j === i ? { ...x, item: v } : x)
+                            }));
+                          }}
+                        />
+                      </div>
+                      <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: "#64748b" }}>
+                        <EditableCell
+                          value={item.qty}
+                          onChange={(v) => {
+                            setGroceries(g => ({
+                              ...g,
+                              [key]: g[key].map((x, j) => j === i ? { ...x, qty: v } : x)
+                            }));
+                          }}
+                        />
+                      </div>
+                      <div style={{ fontSize: 12, color: "#94a3b8" }}>
+                        <EditableCell
+                          value={item.notes}
+                          onChange={(v) => {
+                            setGroceries(g => ({
+                              ...g,
+                              [key]: g[key].map((x, j) => j === i ? { ...x, notes: v } : x)
+                            }));
+                          }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          setGroceries(g => ({
+                            ...g,
+                            [key]: g[key].filter((_, j) => j !== i)
+                          }));
+                        }}
+                        style={{
+                          background: "none", border: "none", color: "#ef444466",
+                          cursor: "pointer", fontSize: 14, opacity: 0.4,
+                        }}
+                        onMouseEnter={(e) => (e.target.style.opacity = 1)}
+                        onMouseLeave={(e) => (e.target.style.opacity = 0.4)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Meal prep reminder */}
+            <div style={{
+              background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)",
+              borderRadius: 10, padding: "12px 16px",
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#4ade80", letterSpacing: "0.5px", marginBottom: 6 }}>SUNDAY MEAL PREP</div>
+              <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.6 }}>
+                1. Cook 4 lbs chicken (season half differently) • 2. Make big batch rice + quinoa • 3. Roast sweet potatoes + Brussels sprouts • 4. Prep overnight oats (3-4 jars) • 5. Wash/portion greens
               </div>
             </div>
           </div>

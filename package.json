@@ -13,6 +13,7 @@
   },
   "homepage": "https://sonnguyen0528.github.io/performance-platform/",
   "dependencies": {
+    "firebase": "^12.8.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

@@ -79,6 +79,38 @@ const DEFAULT_TARGETS = [
   { metric: "Sleep", current: "Variable", target: "8–9 hrs/night", how: "10:30 PM → 8:00 AM minimum." },
 ];
 
+const DEFAULT_MEALS = {
+  meal1: [
+    { name: "Yogurt Bowl", ingredients: "Greek yogurt + granola + berries + walnuts", prep: "Dump & eat", time: "2 min", favorite: false },
+    { name: "Egg Scramble", ingredients: "3 eggs + spinach + avocado on toast", prep: "Quick pan scramble", time: "5 min", favorite: false },
+    { name: "Overnight Oats", ingredients: "Oats + yogurt + protein powder + berries", prep: "Made night before", time: "0 min", favorite: false },
+    { name: "Smoked Salmon Plate", ingredients: "Smoked salmon + cream cheese + toast + avocado", prep: "Assemble, no cooking", time: "3 min", favorite: false },
+  ],
+  meal2: [
+    { name: "Sheet Pan Chicken", ingredients: "Chicken thighs + sweet potato + broccoli", prep: "1 pan, 425°F oven", time: "40 min", favorite: false },
+    { name: "Salmon Rice Bowl", ingredients: "Salmon fillet + brown rice + bok choy", prep: "Rice cooker + pan sear", time: "15 min", favorite: false },
+    { name: "Turkey Taco Bowl", ingredients: "Ground turkey + black beans + rice + spinach + avocado", prep: "Skillet + reheat rice", time: "10 min", favorite: false },
+    { name: "Fish Tacos", ingredients: "White fish + corn tortillas + spinach + avocado", prep: "Pan sear fish", time: "8 min", favorite: false },
+    { name: "Chicken Stir-Fry", ingredients: "Chicken breast + quinoa + broccoli + bok choy", prep: "Wok or large pan", time: "15 min", favorite: false },
+    { name: "Chicken & Potatoes (reheat)", ingredients: "Batch chicken + roasted potatoes + Brussels sprouts", prep: "Microwave batch prep", time: "3 min", favorite: false },
+  ],
+  meal3: [
+    { name: "Cottage Cheese Bowl", ingredients: "Cottage cheese + berries + dark chocolate", prep: "Assemble", time: "1 min", favorite: false },
+    { name: "Protein Shake", ingredients: "Protein powder + banana + walnuts + milk", prep: "Blend", time: "2 min", favorite: false },
+    { name: "Yogurt & Granola", ingredients: "Greek yogurt + granola + berries", prep: "Assemble", time: "1 min", favorite: false },
+    { name: "Quick Eggs", ingredients: "2-3 eggs scrambled + spinach", prep: "Pan", time: "5 min", favorite: false },
+  ],
+  batchPrep: [
+    { task: "Sheet pan chicken thighs (4 lbs) + sweet potatoes", done: false, tip: "425°F for 40 min. Season half with Italian, half with taco spice." },
+    { task: "Cook big batch brown rice + quinoa", done: false, tip: "Rice cooker. Makes ~8 cups total. Stores 5 days in fridge." },
+    { task: "Roast broccoli + Brussels sprouts", done: false, tip: "Same oven as chicken, separate pan. Toss with olive oil + salt." },
+    { task: "Brown ground turkey with seasoning", done: false, tip: "Taco seasoning. Use for bowls all week." },
+    { task: "Make 4 overnight oats jars", done: false, tip: "1/2 cup oats + 1/2 cup yogurt + 1 scoop protein + berries. Fridge." },
+    { task: "Wash and portion spinach/greens", done: false, tip: "Pre-portioned = no excuse to skip veggies." },
+    { task: "Portion walnuts into snack bags", done: false, tip: "1 oz portions. Grab and go." },
+  ],
+};
+
 const DEFAULT_GROCERIES = {
   proteins: [
     { item: "Chicken breast/thighs", qty: "4 lbs", notes: "~8oz/day cooked", have: false },
@@ -571,6 +603,7 @@ export default function App() {
   const [selectedPhase, setSelectedPhase] = useState("Version A (Strength — 12 Weeks)");
   const [workoutLogs, setWorkoutLogs] = useState({});
   const [groceries, setGroceries] = useState(DEFAULT_GROCERIES);
+  const [meals, setMeals] = useState(DEFAULT_MEALS);
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState("");
   const [undoStack, setUndoStack] = useState([]);
@@ -594,6 +627,7 @@ export default function App() {
           setWorkouts(cloudData.workouts || DEFAULT_WORKOUTS);
           setWorkoutLogs(cloudData.workoutLogs || {});
           setGroceries(cloudData.groceries || DEFAULT_GROCERIES);
+          setMeals(cloudData.meals || DEFAULT_MEALS);
           setNotes(cloudData.notes || "");
         } else {
           // First time: load local data and sync to cloud
@@ -609,6 +643,7 @@ export default function App() {
             setWorkouts(localData.workouts || DEFAULT_WORKOUTS);
             setWorkoutLogs(localData.workoutLogs || {});
             setGroceries(localData.groceries || DEFAULT_GROCERIES);
+            setMeals(localData.meals || DEFAULT_MEALS);
             setNotes(localData.notes || "");
           }
         }
@@ -637,7 +672,7 @@ export default function App() {
   // Auto-save (local + cloud if logged in)
   useEffect(() => {
     if (loading) return;
-    const data = { profile, meds, supps, conditions, labs, targets, schedule, workouts, workoutLogs, groceries, notes };
+    const data = { profile, meds, supps, conditions, labs, targets, schedule, workouts, workoutLogs, groceries, meals, notes };
     const timer = setTimeout(() => {
       saveLocalData(data);
       if (user) {
@@ -645,7 +680,7 @@ export default function App() {
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [profile, meds, supps, conditions, labs, targets, schedule, workouts, workoutLogs, groceries, notes, user, loading]);
+  }, [profile, meds, supps, conditions, labs, targets, schedule, workouts, workoutLogs, groceries, meals, notes, user, loading]);
 
   const handleSignIn = async () => {
     try {
@@ -724,6 +759,7 @@ export default function App() {
     { id: "health", label: "Health", icon: "🩺" },
     { id: "nutrition", label: "Nutrition", icon: "🥩" },
     { id: "groceries", label: "Groceries", icon: "🛒" },
+    { id: "meals", label: "Meals", icon: "🍳" },
     { id: "targets", label: "90-Day", icon: "🎯" },
   ];
 
@@ -1597,6 +1633,204 @@ export default function App() {
               <div style={{ fontSize: 11, fontWeight: 700, color: "#4ade80", letterSpacing: "0.5px", marginBottom: 6 }}>SUNDAY MEAL PREP</div>
               <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.6 }}>
                 1. Cook 4 lbs chicken (season half differently) • 2. Make big batch rice + quinoa • 3. Roast sweet potatoes + Brussels sprouts • 4. Prep overnight oats (3-4 jars) • 5. Wash/portion greens
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── MEALS TAB ───────────────────────────────────────────────── */}
+        {tab === "meals" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>Quick Meals & Batch Prep</div>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Minimal cooking, maximum gains — all from your grocery list</div>
+              </div>
+              <button
+                onClick={() => setMeals(DEFAULT_MEALS)}
+                style={{
+                  background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.2)",
+                  borderRadius: 6, color: "#60a5fa", fontSize: 11, padding: "6px 12px", cursor: "pointer",
+                }}
+              >
+                Reset Defaults
+              </button>
+            </div>
+
+            {/* Meal timing info */}
+            <div style={{
+              display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12,
+            }}>
+              {[
+                { meal: "Meal 1", time: "~11:30 AM", cals: "500-600", pct: "20-25%", color: "#f59e0b" },
+                { meal: "Meal 2", time: "~6:30 PM", cals: "1,300-1,500", pct: "50-60%", color: "#4ade80" },
+                { meal: "Meal 3", time: "~9:30 PM", cals: "400-500", pct: "15-20%", color: "#60a5fa" },
+              ].map((m, i) => (
+                <div key={i} style={{
+                  background: `${m.color}08`, border: `1px solid ${m.color}22`,
+                  borderRadius: 10, padding: 12, textAlign: "center",
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: m.color }}>{m.meal}</div>
+                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{m.time}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{m.cals}</div>
+                  <div style={{ fontSize: 10, color: "#64748b" }}>{m.pct} daily</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Meal 1 options */}
+            <div style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 14, overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(245,158,11,0.06)",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>Meal 1 — Break Fast</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>Quick & light</span>
+                </div>
+              </div>
+              {meals.meal1?.map((meal, i) => (
+                <div key={i} style={{
+                  display: "grid", gridTemplateColumns: "1fr 2fr 1fr 60px",
+                  gap: 12, padding: "12px 20px", alignItems: "center",
+                  borderBottom: i < meals.meal1.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{meal.name}</div>
+                  <div style={{ fontSize: 12, color: "#94a3b8" }}>{meal.ingredients}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{meal.prep}</div>
+                  <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#f59e0b" }}>{meal.time}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Meal 2 options */}
+            <div style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 14, overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(74,222,128,0.06)",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#4ade80" }}>Meal 2 — Dinner Feast</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>Main fuel, biggest meal</span>
+                </div>
+              </div>
+              {meals.meal2?.map((meal, i) => (
+                <div key={i} style={{
+                  display: "grid", gridTemplateColumns: "1fr 2fr 1fr 60px",
+                  gap: 12, padding: "12px 20px", alignItems: "center",
+                  borderBottom: i < meals.meal2.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{meal.name}</div>
+                  <div style={{ fontSize: 12, color: "#94a3b8" }}>{meal.ingredients}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{meal.prep}</div>
+                  <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#4ade80" }}>{meal.time}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Meal 3 options */}
+            <div style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 14, overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(96,165,250,0.06)",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#60a5fa" }}>Meal 3 — Late Night</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>Light, easy, no cooking</span>
+                </div>
+              </div>
+              {meals.meal3?.map((meal, i) => (
+                <div key={i} style={{
+                  display: "grid", gridTemplateColumns: "1fr 2fr 1fr 60px",
+                  gap: 12, padding: "12px 20px", alignItems: "center",
+                  borderBottom: i < meals.meal3.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{meal.name}</div>
+                  <div style={{ fontSize: 12, color: "#94a3b8" }}>{meal.ingredients}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{meal.prep}</div>
+                  <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#60a5fa" }}>{meal.time}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Sunday Batch Prep Checklist */}
+            <div style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 14, overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(192,132,252,0.06)",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#c084fc" }}>Sunday Batch Prep</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>
+                    ({meals.batchPrep?.filter(t => t.done).length}/{meals.batchPrep?.length} done)
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setMeals(m => ({
+                      ...m,
+                      batchPrep: m.batchPrep.map(t => ({ ...t, done: false }))
+                    }));
+                  }}
+                  style={{
+                    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 6, color: "#94a3b8", fontSize: 11, padding: "4px 10px", cursor: "pointer",
+                  }}
+                >
+                  Clear All
+                </button>
+              </div>
+              {meals.batchPrep?.map((task, i) => (
+                <div key={i} style={{
+                  display: "grid", gridTemplateColumns: "32px 1fr",
+                  gap: 12, padding: "12px 20px", alignItems: "flex-start",
+                  borderBottom: i < meals.batchPrep.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  opacity: task.done ? 0.5 : 1,
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={task.done}
+                    onChange={(e) => {
+                      setMeals(m => ({
+                        ...m,
+                        batchPrep: m.batchPrep.map((t, j) => j === i ? { ...t, done: e.target.checked } : t)
+                      }));
+                    }}
+                    style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#c084fc", marginTop: 2 }}
+                  />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, textDecoration: task.done ? "line-through" : "none" }}>{task.task}</div>
+                    <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{task.tip}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pro tip */}
+            <div style={{
+              background: "rgba(250,204,21,0.06)", border: "1px solid rgba(250,204,21,0.15)",
+              borderRadius: 10, padding: "12px 16px",
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#facc15", letterSpacing: "0.5px", marginBottom: 6 }}>PRO TIP</div>
+              <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.6 }}>
+                Batch prep on Sunday = 3-minute meals all week. Just microwave protein + carb, add fresh greens, done. Total weekly cooking: ~2 hours.
               </div>
             </div>
           </div>

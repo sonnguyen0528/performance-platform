@@ -80,34 +80,24 @@ const DEFAULT_TARGETS = [
 ];
 
 const DEFAULT_MEALS = {
-  meal1: [
-    { name: "Yogurt Bowl", ingredients: "Greek yogurt + granola + berries + walnuts", prep: "Dump & eat", time: "2 min", favorite: false },
-    { name: "Egg Scramble", ingredients: "3 eggs + spinach + avocado on toast", prep: "Quick pan scramble", time: "5 min", favorite: false },
-    { name: "Overnight Oats", ingredients: "Oats + yogurt + protein powder + berries", prep: "Made night before", time: "0 min", favorite: false },
-    { name: "Smoked Salmon Plate", ingredients: "Smoked salmon + cream cheese + toast + avocado", prep: "Assemble, no cooking", time: "3 min", favorite: false },
+  tempoMeals: [
+    { meal: "Tempo Meal 1", time: "~11:30 AM", cal: 500, protein: 30, done: false },
+    { meal: "Tempo Meal 2", time: "~3:00 PM", cal: 500, protein: 30, done: false },
+    { meal: "Tempo Meal 3", time: "~7:00 PM", cal: 500, protein: 30, done: false },
   ],
-  meal2: [
-    { name: "Sheet Pan Chicken", ingredients: "Chicken thighs + sweet potato + broccoli", prep: "1 pan, 425°F oven", time: "40 min", favorite: false },
-    { name: "Salmon Rice Bowl", ingredients: "Salmon fillet + brown rice + bok choy", prep: "Rice cooker + pan sear", time: "15 min", favorite: false },
-    { name: "Turkey Taco Bowl", ingredients: "Ground turkey + black beans + rice + spinach + avocado", prep: "Skillet + reheat rice", time: "10 min", favorite: false },
-    { name: "Fish Tacos", ingredients: "White fish + corn tortillas + spinach + avocado", prep: "Pan sear fish", time: "8 min", favorite: false },
-    { name: "Chicken Stir-Fry", ingredients: "Chicken breast + quinoa + broccoli + bok choy", prep: "Wok or large pan", time: "15 min", favorite: false },
-    { name: "Chicken & Potatoes (reheat)", ingredients: "Batch chicken + roasted potatoes + Brussels sprouts", prep: "Microwave batch prep", time: "3 min", favorite: false },
+  supplements: [
+    { item: "Protein Shake #1", when: "Post-workout or morning", cal: 150, protein: 25, notes: "1 scoop whey + water or milk", done: false },
+    { item: "Protein Shake #2", when: "Before bed (~9:30 PM)", cal: 150, protein: 25, notes: "Casein or whey + water", done: false },
+    { item: "Greek Yogurt + Walnuts", when: "Snack anytime", cal: 300, protein: 20, notes: "1 cup yogurt + 1oz walnuts", done: false },
+    { item: "Avocado or Olive Oil", when: "Add to any Tempo meal", cal: 250, protein: 2, notes: "1 avocado OR 2 tbsp olive oil", done: false },
   ],
-  meal3: [
-    { name: "Cottage Cheese Bowl", ingredients: "Cottage cheese + berries + dark chocolate", prep: "Assemble", time: "1 min", favorite: false },
-    { name: "Protein Shake", ingredients: "Protein powder + banana + walnuts + milk", prep: "Blend", time: "2 min", favorite: false },
-    { name: "Yogurt & Granola", ingredients: "Greek yogurt + granola + berries", prep: "Assemble", time: "1 min", favorite: false },
-    { name: "Quick Eggs", ingredients: "2-3 eggs scrambled + spinach", prep: "Pan", time: "5 min", favorite: false },
-  ],
-  batchPrep: [
-    { task: "Sheet pan chicken thighs (4 lbs) + sweet potatoes", done: false, tip: "425°F for 40 min. Season half with Italian, half with taco spice." },
-    { task: "Cook big batch brown rice + quinoa", done: false, tip: "Rice cooker. Makes ~8 cups total. Stores 5 days in fridge." },
-    { task: "Roast broccoli + Brussels sprouts", done: false, tip: "Same oven as chicken, separate pan. Toss with olive oil + salt." },
-    { task: "Brown ground turkey with seasoning", done: false, tip: "Taco seasoning. Use for bowls all week." },
-    { task: "Make 4 overnight oats jars", done: false, tip: "1/2 cup oats + 1/2 cup yogurt + 1 scoop protein + berries. Fridge." },
-    { task: "Wash and portion spinach/greens", done: false, tip: "Pre-portioned = no excuse to skip veggies." },
-    { task: "Portion walnuts into snack bags", done: false, tip: "1 oz portions. Grab and go." },
+  weeklyPrep: [
+    { task: "Order Tempo Meals for the week", done: false, tip: "Schedule delivery for Sunday or Monday." },
+    { task: "Stock protein powder (whey + casein)", done: false, tip: "2 scoops/day = ~1 lb/week." },
+    { task: "Buy Greek yogurt (32oz tub)", done: false, tip: "Plain, high protein. Lasts the week." },
+    { task: "Buy walnuts (8oz bag)", done: false, tip: "Pre-portion into 1oz bags if helpful." },
+    { task: "Buy avocados (5-6)", done: false, tip: "Get some ripe, some firm for later in week." },
+    { task: "Prep shaker bottles", done: false, tip: "Keep one at home, one at work/gym." },
   ],
 };
 
@@ -1644,129 +1634,166 @@ export default function App() {
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>Quick Meals & Batch Prep</div>
-                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Minimal cooking, maximum gains — all from your grocery list</div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>Tempo Meals + Supplements</div>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Zero cooking — Tempo delivers, you supplement to hit macros</div>
               </div>
-              <button
-                onClick={() => setMeals(DEFAULT_MEALS)}
-                style={{
-                  background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.2)",
-                  borderRadius: 6, color: "#60a5fa", fontSize: 11, padding: "6px 12px", cursor: "pointer",
-                }}
-              >
-                Reset Defaults
-              </button>
-            </div>
-
-            {/* Meal timing info */}
-            <div style={{
-              display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12,
-            }}>
-              {[
-                { meal: "Meal 1", time: "~11:30 AM", cals: "500-600", pct: "20-25%", color: "#f59e0b" },
-                { meal: "Meal 2", time: "~6:30 PM", cals: "1,300-1,500", pct: "50-60%", color: "#4ade80" },
-                { meal: "Meal 3", time: "~9:30 PM", cals: "400-500", pct: "15-20%", color: "#60a5fa" },
-              ].map((m, i) => (
-                <div key={i} style={{
-                  background: `${m.color}08`, border: `1px solid ${m.color}22`,
-                  borderRadius: 10, padding: 12, textAlign: "center",
-                }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: m.color }}>{m.meal}</div>
-                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{m.time}</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{m.cals}</div>
-                  <div style={{ fontSize: 10, color: "#64748b" }}>{m.pct} daily</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Meal 1 options */}
-            <div style={{
-              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: 14, overflow: "hidden",
-            }}>
-              <div style={{
-                padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)",
-                background: "rgba(245,158,11,0.06)",
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>Meal 1 — Break Fast</span>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>Quick & light</span>
-                </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => {
+                    setMeals(m => ({
+                      ...m,
+                      tempoMeals: m.tempoMeals.map(t => ({ ...t, done: false })),
+                      supplements: m.supplements.map(s => ({ ...s, done: false })),
+                    }));
+                  }}
+                  style={{
+                    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 6, color: "#94a3b8", fontSize: 11, padding: "6px 12px", cursor: "pointer",
+                  }}
+                >
+                  Reset Day
+                </button>
+                <button
+                  onClick={() => setMeals(DEFAULT_MEALS)}
+                  style={{
+                    background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.2)",
+                    borderRadius: 6, color: "#60a5fa", fontSize: 11, padding: "6px 12px", cursor: "pointer",
+                  }}
+                >
+                  Reset All
+                </button>
               </div>
-              {meals.meal1?.map((meal, i) => (
-                <div key={i} style={{
-                  display: "grid", gridTemplateColumns: "1fr 2fr 1fr 60px",
-                  gap: 12, padding: "12px 20px", alignItems: "center",
-                  borderBottom: i < meals.meal1.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
-                }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{meal.name}</div>
-                  <div style={{ fontSize: 12, color: "#94a3b8" }}>{meal.ingredients}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{meal.prep}</div>
-                  <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#f59e0b" }}>{meal.time}</div>
-                </div>
-              ))}
             </div>
 
-            {/* Meal 2 options */}
-            <div style={{
-              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: 14, overflow: "hidden",
-            }}>
-              <div style={{
-                padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)",
-                background: "rgba(74,222,128,0.06)",
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#4ade80" }}>Meal 2 — Dinner Feast</span>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>Main fuel, biggest meal</span>
-                </div>
-              </div>
-              {meals.meal2?.map((meal, i) => (
-                <div key={i} style={{
-                  display: "grid", gridTemplateColumns: "1fr 2fr 1fr 60px",
-                  gap: 12, padding: "12px 20px", alignItems: "center",
-                  borderBottom: i < meals.meal2.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+            {/* Daily totals */}
+            {(() => {
+              const tempoTotal = meals.tempoMeals?.reduce((acc, m) => ({ cal: acc.cal + (m.done ? m.cal : 0), protein: acc.protein + (m.done ? m.protein : 0) }), { cal: 0, protein: 0 }) || { cal: 0, protein: 0 };
+              const suppTotal = meals.supplements?.reduce((acc, s) => ({ cal: acc.cal + (s.done ? s.cal : 0), protein: acc.protein + (s.done ? s.protein : 0) }), { cal: 0, protein: 0 }) || { cal: 0, protein: 0 };
+              const totalCal = tempoTotal.cal + suppTotal.cal;
+              const totalProtein = tempoTotal.protein + suppTotal.protein;
+              const targetCal = 2350;
+              const targetProtein = 160;
+              return (
+                <div style={{
+                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 14, padding: 20,
                 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{meal.name}</div>
-                  <div style={{ fontSize: 12, color: "#94a3b8" }}>{meal.ingredients}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{meal.prep}</div>
-                  <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#4ade80" }}>{meal.time}</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", letterSpacing: "0.5px", marginBottom: 8 }}>CALORIES</div>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                        <span style={{ fontSize: 28, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: totalCal >= targetCal ? "#4ade80" : "#e2e8f0" }}>{totalCal}</span>
+                        <span style={{ fontSize: 14, color: "#64748b" }}>/ {targetCal}</span>
+                      </div>
+                      <div style={{ marginTop: 8, height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${Math.min(100, (totalCal / targetCal) * 100)}%`, background: totalCal >= targetCal ? "#4ade80" : "#f59e0b", borderRadius: 3, transition: "width 0.3s" }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "#64748b", letterSpacing: "0.5px", marginBottom: 8 }}>PROTEIN</div>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                        <span style={{ fontSize: 28, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: totalProtein >= targetProtein ? "#4ade80" : "#e2e8f0" }}>{totalProtein}g</span>
+                        <span style={{ fontSize: 14, color: "#64748b" }}>/ {targetProtein}g</span>
+                      </div>
+                      <div style={{ marginTop: 8, height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${Math.min(100, (totalProtein / targetProtein) * 100)}%`, background: totalProtein >= targetProtein ? "#4ade80" : "#ef4444", borderRadius: 3, transition: "width 0.3s" }} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })()}
 
-            {/* Meal 3 options */}
+            {/* Tempo Meals */}
             <div style={{
               background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: 14, overflow: "hidden",
             }}>
               <div style={{
                 padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)",
-                background: "rgba(96,165,250,0.06)",
+                background: "rgba(251,146,60,0.08)",
                 display: "flex", justifyContent: "space-between", alignItems: "center",
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#60a5fa" }}>Meal 3 — Late Night</span>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>Light, easy, no cooking</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#fb923c" }}>Tempo Meals</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>1,500 cal • 90g protein</span>
                 </div>
+                <a href="https://www.tempomeals.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#fb923c", textDecoration: "none" }}>
+                  tempomeals.com ↗
+                </a>
               </div>
-              {meals.meal3?.map((meal, i) => (
+              {meals.tempoMeals?.map((meal, i) => (
                 <div key={i} style={{
-                  display: "grid", gridTemplateColumns: "1fr 2fr 1fr 60px",
+                  display: "grid", gridTemplateColumns: "32px 1fr 80px 80px 80px",
                   gap: 12, padding: "12px 20px", alignItems: "center",
-                  borderBottom: i < meals.meal3.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  borderBottom: i < meals.tempoMeals.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  opacity: meal.done ? 0.5 : 1,
                 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{meal.name}</div>
-                  <div style={{ fontSize: 12, color: "#94a3b8" }}>{meal.ingredients}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{meal.prep}</div>
-                  <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#60a5fa" }}>{meal.time}</div>
+                  <input
+                    type="checkbox"
+                    checked={meal.done}
+                    onChange={(e) => {
+                      setMeals(m => ({
+                        ...m,
+                        tempoMeals: m.tempoMeals.map((t, j) => j === i ? { ...t, done: e.target.checked } : t)
+                      }));
+                    }}
+                    style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#fb923c" }}
+                  />
+                  <div style={{ fontSize: 13, fontWeight: 600, textDecoration: meal.done ? "line-through" : "none" }}>{meal.meal}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{meal.time}</div>
+                  <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: "#f59e0b" }}>{meal.cal} cal</div>
+                  <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: "#ef4444" }}>{meal.protein}g</div>
                 </div>
               ))}
             </div>
 
-            {/* Sunday Batch Prep Checklist */}
+            {/* Required Supplements */}
+            <div style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 14, overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(74,222,128,0.08)",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#4ade80" }}>Required Supplements</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>+850 cal • +72g protein</span>
+                </div>
+                <span style={{ fontSize: 11, color: "#4ade80" }}>Must complete to hit macros</span>
+              </div>
+              {meals.supplements?.map((supp, i) => (
+                <div key={i} style={{
+                  display: "grid", gridTemplateColumns: "32px 1fr 1fr 80px 80px",
+                  gap: 12, padding: "12px 20px", alignItems: "center",
+                  borderBottom: i < meals.supplements.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  opacity: supp.done ? 0.5 : 1,
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={supp.done}
+                    onChange={(e) => {
+                      setMeals(m => ({
+                        ...m,
+                        supplements: m.supplements.map((s, j) => j === i ? { ...s, done: e.target.checked } : s)
+                      }));
+                    }}
+                    style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#4ade80" }}
+                  />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, textDecoration: supp.done ? "line-through" : "none" }}>{supp.item}</div>
+                    <div style={{ fontSize: 11, color: "#64748b" }}>{supp.notes}</div>
+                  </div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{supp.when}</div>
+                  <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: "#f59e0b" }}>{supp.cal} cal</div>
+                  <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: "#ef4444" }}>{supp.protein}g</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Weekly Prep Checklist */}
             <div style={{
               background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: 14, overflow: "hidden",
@@ -1777,16 +1804,16 @@ export default function App() {
                 display: "flex", justifyContent: "space-between", alignItems: "center",
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#c084fc" }}>Sunday Batch Prep</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#c084fc" }}>Weekly Prep</span>
                   <span style={{ fontSize: 11, color: "#64748b" }}>
-                    ({meals.batchPrep?.filter(t => t.done).length}/{meals.batchPrep?.length} done)
+                    ({meals.weeklyPrep?.filter(t => t.done).length}/{meals.weeklyPrep?.length} done)
                   </span>
                 </div>
                 <button
                   onClick={() => {
                     setMeals(m => ({
                       ...m,
-                      batchPrep: m.batchPrep.map(t => ({ ...t, done: false }))
+                      weeklyPrep: m.weeklyPrep.map(t => ({ ...t, done: false }))
                     }));
                   }}
                   style={{
@@ -1794,14 +1821,14 @@ export default function App() {
                     borderRadius: 6, color: "#94a3b8", fontSize: 11, padding: "4px 10px", cursor: "pointer",
                   }}
                 >
-                  Clear All
+                  Clear
                 </button>
               </div>
-              {meals.batchPrep?.map((task, i) => (
+              {meals.weeklyPrep?.map((task, i) => (
                 <div key={i} style={{
                   display: "grid", gridTemplateColumns: "32px 1fr",
                   gap: 12, padding: "12px 20px", alignItems: "flex-start",
-                  borderBottom: i < meals.batchPrep.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  borderBottom: i < meals.weeklyPrep.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
                   opacity: task.done ? 0.5 : 1,
                 }}>
                   <input
@@ -1810,7 +1837,7 @@ export default function App() {
                     onChange={(e) => {
                       setMeals(m => ({
                         ...m,
-                        batchPrep: m.batchPrep.map((t, j) => j === i ? { ...t, done: e.target.checked } : t)
+                        weeklyPrep: m.weeklyPrep.map((t, j) => j === i ? { ...t, done: e.target.checked } : t)
                       }));
                     }}
                     style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#c084fc", marginTop: 2 }}
@@ -1823,14 +1850,14 @@ export default function App() {
               ))}
             </div>
 
-            {/* Pro tip */}
+            {/* Summary */}
             <div style={{
-              background: "rgba(250,204,21,0.06)", border: "1px solid rgba(250,204,21,0.15)",
+              background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)",
               borderRadius: 10, padding: "12px 16px",
             }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#facc15", letterSpacing: "0.5px", marginBottom: 6 }}>PRO TIP</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#4ade80", letterSpacing: "0.5px", marginBottom: 6 }}>DAILY TOTAL WHEN COMPLETE</div>
               <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.6 }}>
-                Batch prep on Sunday = 3-minute meals all week. Just microwave protein + carb, add fresh greens, done. Total weekly cooking: ~2 hours.
+                <strong>~2,350 cal</strong> (Tempo 1,500 + Supps 850) • <strong>~162g protein</strong> (Tempo 90g + Supps 72g) — Hits your targets with zero cooking.
               </div>
             </div>
           </div>
